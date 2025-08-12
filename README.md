@@ -10,6 +10,7 @@ Uma API REST completa para gerenciamento de tarefas com autenticação JWT, cons
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Instalação e Configuração](#instalação-e-configuração)
 - [Como Usar a API](#como-usar-a-api)
+- [Testando a API com Insomnia/Postman](#testando-a-api-com-insomniapostman)
 - [Exemplos Práticos](#exemplos-práticos)
 - [Testes](#testes)
 - [Segurança](#segurança)
@@ -34,33 +35,211 @@ Esta é uma **API REST** (Representational State Transfer) que permite:
 - **Status Codes**: 200 (sucesso), 404 (não encontrado), 500 (erro servidor)
 - **JSON**: Formato padrão para troca de dados
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas e Suas Justificativas
 
 ### Backend Core
-- **Node.js**: Runtime JavaScript no servidor
-- **Express.js**: Framework web minimalista e flexível
-- **JavaScript**: Linguagem de programação principal
+
+#### **Node.js** - Runtime JavaScript no Servidor
+
+- ✅ **Mesma linguagem**: JavaScript tanto no front quanto no back-end
+- ✅ **Performance**: Event-loop não-bloqueante, ideal para I/O intensivo
+- ✅ **Ecossistema**: NPM com milhões de pacotes disponíveis
+- ✅ **Comunidade**: Grande suporte e documentação
+- ✅ **Rapidez de desenvolvimento**: Prototipagem rápida
+
+
+#### **Express.js** - Framework Web Minimalista
+
+- ✅ **Simplicidade**: Curva de aprendizado baixa
+- ✅ **Flexibilidade**: Não impõe estrutura rígida
+- ✅ **Middleware**: Sistema poderoso de middlewares
+- ✅ **Maturidade**: Framework estável e testado
+- ✅ **Documentação**: Excelente documentação oficial
+
 
 ### Banco de Dados
-- **Prisma**: ORM (Object-Relational Mapping) moderno
-- **SQLite**: Banco de dados leve para desenvolvimento
+
+#### **Prisma** - ORM Moderno
+- ✅ **Type Safety**: Tipagem automática baseada no schema
+- ✅ **Developer Experience**: Autocompletar e IntelliSense
+- ✅ **Migrações**: Sistema automático de versionamento do BD
+- ✅ **Query Builder**: Sintaxe intuitiva e legível
+- ✅ **Prisma Studio**: Interface visual para o banco
+
+**Exemplo prático:**
+```javascript
+// Sem ORM (SQL puro) - propenso a erros
+const result = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+
+// Com Prisma - type-safe e intuitivo
+const user = await prisma.user.findUnique({ where: { email } });
+```
+
+#### **SQLite** - Banco Leve para Desenvolvimento
+- ✅ **Zero configuração**: Não precisa instalar servidor de BD
+- ✅ **Portabilidade**: Arquivo único, fácil de compartilhar
+- ✅ **Desenvolvimento**: Ideal para prototipagem e testes
+- ✅ **Simplicidade**: Perfeito para projetos pequenos/médios
+- ✅ **Compatibilidade**: Fácil migração para PostgreSQL/MySQL
 
 ### Autenticação & Segurança
-- **JWT (jsonwebtoken)**: Tokens para autenticação
-- **bcrypt**: Hash seguro de senhas
-- **express-rate-limit**: Proteção contra spam
+
+#### **JWT (JSON Web Tokens)** - Autenticação Stateless
+
+- ✅ **Stateless**: Servidor não precisa armazenar sessões
+- ✅ **Escalabilidade**: Funciona bem em arquiteturas distribuídas
+- ✅ **Padrão da indústria**: Amplamente adotado
+- ✅ **Flexibilidade**: Pode carregar dados do usuário no payload
+- ✅ **Cross-domain**: Funciona entre diferentes domínios
+
+**Estrutura do JWT:**
+```
+Header.Payload.Signature
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature
+```
+
+#### **bcrypt** - Hash Seguro de Senhas
+- ✅ **Segurança**: Algoritmo comprovadamente seguro
+- ✅ **Salt automático**: Protege contra rainbow tables
+- ✅ **Custo adaptável**: Pode aumentar complexidade com o tempo
+- ✅ **Padrão da indústria**: Usado por grandes empresas
+- ✅ **Resistente a força bruta**: Intencionalmente lento
+
+**Exemplo de segurança:**
+```javascript
+// ❌ NUNCA faça isso:
+const user = { password: "123456" };
+
+// ✅ Sempre use hash:
+const hash = await bcrypt.hash("123456", 10);
+// Resultado: $2b$10$N9qo8uLOickgx2ZMRZoMye...
+```
+
+#### **express-rate-limit** - Proteção Contra Spam
+
+- ✅ **Proteção DDoS**: Limita requisições por IP/usuário
+- ✅ **Flexibilidade**: Diferentes limites para diferentes rotas
+- ✅ **Configurável**: Janelas de tempo e limites customizáveis
+- ✅ **Integração**: Funciona perfeitamente com Express
+- ✅ **Produção**: Essencial para APIs públicas
+
+**Exemplo de uso:**
+```javascript
+// Limita login a 10 tentativas por 5 minutos
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  limit: 10, // máximo 10 tentativas
+});
+```
 
 ### Validação & Middleware
-- **Zod**: Validação de dados com TypeScript-like schemas
-- **CORS**: Permite requisições de diferentes origens
-- **Morgan**: Logger de requisições HTTP
-- **Cookie-parser**: Manipulação de cookies
+
+#### **Zod** - Validação de Dados TypeScript-like
+
+- ✅ **Type Safety**: Inferência automática de tipos
+- ✅ **Runtime Validation**: Valida dados em tempo de execução
+- ✅ **Mensagens claras**: Erros descritivos e úteis
+- ✅ **Composição**: Schemas reutilizáveis e combináveis
+- ✅ **Performance**: Validação rápida e eficiente
+
+**Exemplo prático:**
+```javascript
+const userSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter 6+ caracteres"),
+  name: z.string().optional()
+});
+
+// Validação automática com mensagens claras
+const result = userSchema.safeParse(userData);
+```
+
+#### **CORS** - Cross-Origin Resource Sharing
+
+- ✅ **Segurança**: Controla quais domínios podem acessar a API
+- ✅ **Flexibilidade**: Configuração granular por rota
+- ✅ **Padrão web**: Implementa especificação oficial do W3C
+- ✅ **Desenvolvimento**: Facilita integração com frontends
+- ✅ **Produção**: Essencial para APIs públicas
+
+**Por que é necessário:**
+```javascript
+// Sem CORS: navegador bloqueia requisições de outros domínios
+// Com CORS: permite frontend (localhost:3001) acessar API (localhost:3000)
+app.use(cors()); // Permite todas as origens (desenvolvimento)
+```
+
+#### **Morgan** - Logger de Requisições HTTP
+- ✅ **Debugging**: Facilita identificação de problemas
+- ✅ **Monitoramento**: Acompanha performance da API
+- ✅ **Auditoria**: Registra todas as requisições
+- ✅ **Formatos**: Vários formatos de log predefinidos
+- ✅ **Integração**: Funciona perfeitamente com Express
+
+**Exemplo de saída:**
+```
+GET /todos 200 15.234 ms - 1024
+POST /auth/login 401 5.123 ms - 45
+```
 
 ### Desenvolvimento & Testes
-- **Nodemon**: Reinicialização automática em desenvolvimento
-- **Vitest**: Framework de testes rápido
-- **Supertest**: Testes de APIs HTTP
-- **Cross-env**: Variáveis de ambiente multiplataforma
+
+#### **Nodemon** - Reinicialização Automática
+- ✅ **Produtividade**: Reinicia servidor automaticamente
+- ✅ **Desenvolvimento**: Essencial para desenvolvimento ágil
+- ✅ **Configurável**: Pode ignorar arquivos específicos
+- ✅ **Zero config**: Funciona out-of-the-box
+- ✅ **Padrão**: Usado pela maioria dos projetos Node.js
+
+**Sem nodemon:** Precisa parar e iniciar servidor manualmente a cada mudança
+**Com nodemon:** Mudanças são refletidas automaticamente
+
+
+#### **Vitest** - Framework de Testes Rápido
+
+- ✅ **Performance**: Execução paralela e cache inteligente
+- ✅ **Compatibilidade**: API similar ao Jest
+- ✅ **Vite integration**: Aproveita o bundler Vite
+- ✅ **TypeScript**: Suporte nativo sem configuração
+- ✅ **Watch mode**: Re-executa testes automaticamente
+
+**Comparação de performance:**
+```
+Jest: ~2.5s para executar 50 testes
+Vitest: ~0.8s para executar 50 testes
+```
+
+#### **Supertest** - Testes de APIs HTTP
+- ✅ **Integração**: Testa a API completa (end-to-end)
+- ✅ **Simplicidade**: API fluente e intuitiva
+- ✅ **Assertions**: Validações built-in para HTTP
+- ✅ **Mocking**: Não precisa de servidor real
+- ✅ **Padrão**: Amplamente usado para testar APIs Express
+
+**Exemplo de teste:**
+```javascript
+const response = await request(app)
+  .post('/auth/login')
+  .send({ email: 'test@test.com', password: '123456' })
+  .expect(200)
+  .expect('Content-Type', /json/);
+```
+
+#### **Cross-env** - Variáveis de Ambiente Multiplataforma
+- ✅ **Compatibilidade**: Funciona em Windows, Linux e macOS
+- ✅ **Simplicidade**: Uma linha resolve problemas de OS
+- ✅ **Confiabilidade**: Elimina erros relacionados ao sistema
+- ✅ **Padrão**: Usado pela maioria dos projetos Node.js
+- ✅ **Zero config**: Funciona imediatamente
+
+**Problema que resolve:**
+```bash
+# ❌ Não funciona no Windows:
+NODE_ENV=test npm test
+
+# ✅ Funciona em todos os sistemas:
+cross-env NODE_ENV=test npm test
+```
 
 ## 🧠 Conceitos Fundamentais
 
@@ -139,24 +318,13 @@ API-lista-de-tarefas/
 
 ### Passo a Passo
 
-1. **Clone o repositório**
-```bash
-# Linux/macOS
-git clone https://github.com/Natalia-Chaves/API-lista-de-tarefas.git
-cd API-lista-de-tarefas
-
-# Windows (Command Prompt)
-git clone https://github.com/Natalia-Chaves/API-lista-de-tarefas.git
-cd API-lista-de-tarefas
-```
-
-2. **Instale as dependências**
+1. **Instale as dependências**
 ```bash
 # Linux/macOS/Windows
 npm install
 ```
 
-3. **Configure as variáveis de ambiente**
+2. **Configure as variáveis de ambiente**
 ```bash
 # Linux/macOS - Criar arquivo .env
 cat > .env << EOF
@@ -182,7 +350,7 @@ echo REFRESH_TTL_DAYS=7 >> .env
 # REFRESH_TTL_DAYS=7
 ```
 
-4. **Configure o banco de dados**
+3. **Configure o banco de dados**
 ```bash
 # Linux/macOS/Windows - Gera o cliente Prisma
 npx prisma generate
@@ -231,6 +399,143 @@ Content-Type: application/json
 Authorization: Bearer SEU_JWT_TOKEN_AQUI
 ```
 
+## 🧪 Testando a API com Insomnia/Postman
+
+### Configuração Inicial
+
+1. **Baixe e instale:**
+   - [Insomnia](https://insomnia.rest/download) (recomendado)
+   - [Postman](https://www.postman.com/downloads/)
+
+2. **Inicie a API:**
+```bash
+npm run dev
+```
+
+3. **Base URL:** `http://localhost:3000`
+
+### Fluxo de Teste Completo
+
+#### 1. **Registrar Usuário**
+- **Método:** `POST`
+- **URL:** `http://localhost:3000/auth/register`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "name": "Teste User",
+    "email": "teste@email.com",
+    "password": "senha123"
+  }
+  ```
+
+#### 2. **Fazer Login**
+- **Método:** `POST`
+- **URL:** `http://localhost:3000/auth/login`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "email": "teste@email.com",
+    "password": "senha123"
+  }
+  ```
+- **⚠️ IMPORTANTE:** Copie o `access_token` da resposta!
+
+#### 3. **Criar Tarefa** (Requer Token)
+- **Método:** `POST`
+- **URL:** `http://localhost:3000/todos`
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer SEU_ACCESS_TOKEN_AQUI
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "title": "Minha primeira tarefa",
+    "priority": 1
+  }
+  ```
+
+#### 4. **Listar Tarefas** (Requer Token)
+- **Método:** `GET`
+- **URL:** `http://localhost:3000/todos`
+- **Headers:**
+  ```
+  Authorization: Bearer SEU_ACCESS_TOKEN_AQUI
+  ```
+
+#### 5. **Atualizar Tarefa** (Requer Token)
+- **Método:** `PATCH`
+- **URL:** `http://localhost:3000/todos/1` (substitua 1 pelo ID da tarefa)
+- **Headers:**
+  ```
+  Content-Type: application/json
+  Authorization: Bearer SEU_ACCESS_TOKEN_AQUI
+  ```
+- **Body (JSON):**
+  ```json
+  {
+    "completed": true,
+    "title": "Tarefa concluída!"
+  }
+  ```
+
+#### 6. **Deletar Tarefa** (Requer Token)
+- **Método:** `DELETE`
+- **URL:** `http://localhost:3000/todos/1`
+- **Headers:**
+  ```
+  Authorization: Bearer SEU_ACCESS_TOKEN_AQUI
+  ```
+
+### Dicas para Insomnia/Postman
+
+#### **Variáveis de Ambiente:**
+1. Crie uma variável `base_url` = `http://localhost:3000`
+2. Crie uma variável `token` para armazenar o access_token
+3. Use `{{base_url}}` e `{{token}}` nas requisições
+
+#### **Automatizar Token:**
+- No Postman: Use "Tests" para extrair o token automaticamente
+- No Insomnia: Use "Response" > "Body Attribute" para capturar o token
+
+#### **Collection/Workspace:**
+Crie uma coleção com todas as requisições organizadas:
+```
+📁 API Lista de Tarefas
+├── 🔐 Auth
+│   ├── Register
+│   ├── Login
+│   ├── Me
+│   ├── Refresh
+│   └── Logout
+└── 📝 Todos
+    ├── Create Todo
+    ├── List Todos
+    ├── Get Todo
+    ├── Update Todo
+    └── Delete Todo
+```
+
+### Status Codes Esperados
+- ✅ **200**: Sucesso (GET, PATCH)
+- ✅ **201**: Criado (POST register, POST todos)
+- ✅ **204**: Sem conteúdo (DELETE)
+- ❌ **400**: Dados inválidos
+- ❌ **401**: Não autorizado (token inválido/ausente)
+- ❌ **404**: Não encontrado
+- ❌ **409**: Conflito (email já existe)
+- ❌ **429**: Muitas requisições (rate limit)
+- ❌ **500**: Erro interno do servidor
+
 ## 💡 Exemplos Práticos
 
 ### 1. Cadastrar um Usuário
@@ -245,15 +550,6 @@ curl -X POST http://localhost:3000/auth/register \
     "email": "joao@email.com",
     "password": "senha123"
   }'
-
-# Windows (Command Prompt)
-curl -X POST http://localhost:3000/auth/register ^
-  -H "Content-Type: application/json" ^
-  -d "{
-    \"name\": \"João Silva\",
-    \"email\": \"joao@email.com\",
-    \"password\": \"senha123\"
-  }"
 
 # Windows (PowerShell)
 Invoke-RestMethod -Uri "http://localhost:3000/auth/register" `
@@ -616,11 +912,6 @@ Além dos endpoints da API, o projeto inclui uma interface web simples:
 4. **Gerenciar tarefas**: Adicione, marque como concluída ou exclua tarefas
 5. **Sessão**: Permanece logado mesmo após recarregar a página
 
-#### Personalização:
-- **HTML**: Modifique `public/index.html` para alterar layout
-- **JavaScript**: Edite `public/app.js` para mudar comportamentos
-- **Estilos**: Adicione CSS inline ou arquivo externo conforme necessário
-
 A interface consome diretamente a API REST e demonstra todas as funcionalidades em ação.
 
 ## 🚀 Deploy e Produção
@@ -644,20 +935,6 @@ DATABASE_URL="postgresql://user:pass@host:5432/dbname" # PostgreSQL em produçã
 - ✅ Backup automático do banco
 - ✅ Rate limiting ativo
 
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
-3. Commit suas mudanças: `git commit -m 'Adiciona nova funcionalidade'`
-4. Push para a branch: `git push origin feature/nova-funcionalidade`
-5. Abra um Pull Request
-
-## 📝 Licença
-
-Este projeto está sob a licença ISC.
-
----
-
 ## 🎓 Conceitos Aprendidos
 
 Ao estudar este projeto, você aprenderá:
@@ -670,6 +947,38 @@ Ao estudar este projeto, você aprenderá:
 - **Arquitetura**: Separação de responsabilidades, middlewares
 - **DevOps**: Variáveis de ambiente, deploy
 
+## 🎯 Resumo das Decisões Técnicas
+
+### **Critérios de Escolha:**
+1. **Simplicidade**: Tecnologias com curva de aprendizado baixa
+2. **Maturidade**: Ferramentas testadas e estáveis
+3. **Comunidade**: Suporte ativo e documentação rica
+4. **Performance**: Adequadas para APIs REST
+5. **Segurança**: Práticas comprovadas da indústria
+6. **Produtividade**: Aceleram o desenvolvimento
+7. **Escalabilidade**: Suportam crescimento futuro
+
+### **Stack Resultante:**
+```
+🏗️ Arquitetura: API REST Stateless
+🖥️ Runtime: Node.js (JavaScript)
+🌐 Framework: Express.js (minimalista)
+🗄️ Banco: SQLite → PostgreSQL (produção)
+🔧 ORM: Prisma (type-safe)
+🔐 Auth: JWT + bcrypt
+✅ Validação: Zod (runtime + types)
+🛡️ Segurança: Rate limiting + CORS
+🧪 Testes: Vitest + Supertest
+📊 Logs: Morgan (HTTP logging)
+```
+
+### **Benefícios da Stack:**
+- ✅ **Desenvolvimento rápido**: Setup em minutos
+- ✅ **Type safety**: Menos bugs em produção
+- ✅ **Segurança**: Práticas modernas implementadas
+- ✅ **Manutenibilidade**: Código limpo e organizado
+- ✅ **Escalabilidade**: Pronta para crescer
+- ✅ **Testabilidade**: Cobertura completa de testes
+
 Este README serve como um guia completo para entender não apenas como usar a API, mas também **por que** cada decisão técnica foi tomada e **como** implementar funcionalidades similares em seus próprios projetos.
 
-Happy coding! 🚀

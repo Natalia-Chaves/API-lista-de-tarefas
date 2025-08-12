@@ -4,14 +4,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
+# Environment variables (contêm segredos/senhas)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Database
+# Database files (SQLite)
 *.db
 *.db-journal
 prisma/dev.db*
@@ -35,7 +35,7 @@ pids/
 # Coverage directory used by tools like istanbul
 coverage/
 
-# IDE
+# IDE configuration
 .vscode/
 .idea/
 *.swp
@@ -50,3 +50,7 @@ coverage/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# IMPORTANTE: Se você commitou algum desses arquivos por engano:
+# git rm --cached <arquivo>
+# git commit -m "Remove arquivo sensível do controle de versão"
