@@ -4,103 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Tarefas</title>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📝 Lista de Tarefas</h1>
-            <p>Gerencie suas tarefas de forma simples</p>
-        </div>
-
-        <div class="content">
-            <!-- Seção de Autenticação -->
-            <div id="authSection" class="auth-section">
-                <div class="auth-toggle">
-                    <p>Não tem conta? <button class="btn-link" onclick="toggleAuth()">Clique aqui para criar</button></p>
-                </div>
-
-                <!-- Login -->
-                <div id="loginDiv">
-                    <h2>Entrar</h2>
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="loginEmail">Email:</label>
-                            <input type="email" id="loginEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="loginPassword">Senha:</label>
-                            <input type="password" id="loginPassword" required>
-                        </div>
-                        <button type="submit" class="btn">Entrar</button>
-                    </form>
-                </div>
-
-                <!-- Registro -->
-                <div id="registerDiv" style="display: none;">
-                    <h2>Criar Conta</h2>
-                    <form id="registerForm">
-                        <div class="form-group">
-                            <label for="registerName">Nome:</label>
-                            <input type="text" id="registerName">
-                        </div>
-                        <div class="form-group">
-                            <label for="registerEmail">Email:</label>
-                            <input type="email" id="registerEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="registerPassword">Senha:</label>
-                            <input type="password" id="registerPassword" required minlength="6">
-                        </div>
-                        <button type="submit" class="btn">Criar Conta</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Aplicação Principal -->
-            <div id="appSection" class="app-section">
-                <div class="app-header">
-                    <div>
-                        <h2>Minhas Tarefas</h2>
-                        <p id="userInfo"></p>
-                    </div>
-                    <button onclick="logout()" class="btn btn-secondary">Sair</button>
-                </div>
-
-                <!-- Formulário Nova Tarefa -->
-                <div class="todo-form">
-                    <h3>Nova Tarefa</h3>
-                    <form id="todoForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="todoTitle">Título:</label>
-                                <input type="text" id="todoTitle" required placeholder="Digite sua tarefa...">
-                            </div>
-                            <div class="form-group">
-                                <label for="todoPriority">Prioridade:</label>
-                                <select id="todoPriority">
-                                    <option value="3">Baixa</option>
-                                    <option value="2" selected>Média</option>
-                                    <option value="1">Alta</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button type="submit" class="btn">Adicionar</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Lista de Tarefas -->
-                <div id="todosList" class="todos-list">
-                    <div class="empty-state">
-                        <p>Nenhuma tarefa encontrada. Adicione uma nova tarefa acima!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <h1>📝 Lista de Tarefas</h1>
+    
+    <!-- Login/Registro -->
+    <div id="auth">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Senha">
+        <input type="text" id="name" placeholder="Nome (só para registro)">
+        <br><br>
+        <button onclick="login()">Entrar</button>
+        <button onclick="register()">Registrar</button>
     </div>
 
-    <script src="app.js"></script>
+    <!-- App -->
+    <div id="app" style="display:none">
+        <p id="user"></p>
+        <button onclick="logout()">Sair</button>
+        
+        <h3>Nova Tarefa</h3>
+        <input type="text" id="title" placeholder="Título da tarefa">
+        <select id="priority">
+            <option value="1">Alta</option>
+            <option value="2">Média</option>
+            <option value="3">Baixa</option>
+        </select>
+        <button onclick="addTodo()">Adicionar</button>
+        
+        <h3>Minhas Tarefas</h3>
+        <ul id="todos"></ul>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        let token = null;
+
+        async function register() {
+            const res = await fetch(`${API}/auth/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    name: document.getElementById('name').value
+                })
+            });
+            
+            if (res.ok) {
+                alert('Registrado! Agora faça login.');
+            } else {
+                const error = await res.json();
+                alert('Erro: ' + (error.error || 'Falha no registro'));
+            }
+        }
+
+        async function login() {
+            const res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                token = data.access_token;
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                document.getElementById('user').textContent = `Olá, ${data.user.name || data.user.email}!`;
+                loadTodos();
+            } else {
+                const error = await res.json();
+                alert('Erro: ' + (error.error || 'Login inválido'));
+            }
+        }
+
+        function logout() {
+            token = null;
+            document.getElementById('auth').style.display = 'block';
+            document.getElementById('app').style.display = 'none';
+        }
+
+        async function addTodo() {
+            const res = await fetch(`${API}/todos`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: document.getElementById('title').value,
+                    priority: parseInt(document.getElementById('priority').value)
+                })
+            });
+            
+            if (res.ok) {
+                document.getElementById('title').value = '';
+                loadTodos();
+            }
+        }
+
+        async function loadTodos() {
+            const res = await fetch(`${API}/todos`, {
+                headers: {'Authorization': `Bearer ${token}`}
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const list = document.getElementById('todos');
+                list.innerHTML = '';
+                
+                data.items.forEach(todo => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                               onchange="toggleTodo(${todo.id}, this.checked)">
+                        ${todo.title} (Prioridade: ${todo.priority})
+                        <button onclick="deleteTodo(${todo.id})">Excluir</button>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        async function toggleTodo(id, completed) {
+            await fetch(`${API}/todos/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({completed})
+            });
+            loadTodos();
+        }
+
+        async function deleteTodo(id) {
+            if (confirm('Excluir tarefa?')) {
+                await fetch(`${API}/todos/${id}`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                loadTodos();
+            }
+        }
+    </script>
 </body>
 </html>
