@@ -6,152 +6,67 @@
     <title>Lista de Tarefas</title>
 </head>
 <body>
+    <!-- Cabeçalho da aplicação -->
     <h1>📝 Lista de Tarefas</h1>
     
-    <!-- Login/Registro -->
+    <!-- Área de mensagens -->
+    <div id="message"></div>
+    
+    <!-- Seção de Autenticação -->
     <div id="auth">
-        <h2>Login</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Senha">
-        <input type="text" id="name" placeholder="Nome (só para registro)">
-        <br><br>
-        <button onclick="login()">Entrar</button>
-        <button onclick="register()">Registrar</button>
+        <h2>Acesso</h2>
+        
+        <!-- Formulário de Login -->
+        <h3>Entrar</h3>
+        <form id="loginForm">
+            <input type="email" name="email" id="loginEmail" placeholder="E-mail" required>
+            <input type="password" name="password" id="loginPassword" placeholder="Senha" required>
+            <br><br>
+            <button type="submit">Entrar</button>
+        </form>
+        
+        <hr>
+        
+        <!-- Formulário de Registro -->
+        <h3>Criar Conta</h3>
+        <form id="registerForm">
+            <input type="text" name="name" id="registerName" placeholder="Nome (opcional)">
+            <input type="email" name="email" id="registerEmail" placeholder="E-mail" required>
+            <input type="password" name="password" id="registerPassword" placeholder="Senha (mín. 6 caracteres)" required minlength="6">
+            <br><br>
+            <button type="submit">Registrar</button>
+        </form>
     </div>
 
-    <!-- App -->
+    <!-- Seção Principal da Aplicação -->
     <div id="app" style="display:none">
+        <!-- Informações do usuário -->
         <p id="user"></p>
         <button onclick="logout()">Sair</button>
         
-        <h3>Nova Tarefa</h3>
-        <input type="text" id="title" placeholder="Título da tarefa">
-        <select id="priority">
-            <option value="1">Alta</option>
-            <option value="2">Média</option>
-            <option value="3">Baixa</option>
-        </select>
-        <button onclick="addTodo()">Adicionar</button>
+        <hr>
         
+        <!-- Formulário para Nova Tarefa -->
+        <h3>Nova Tarefa</h3>
+        <form id="todoForm">
+            <input type="text" name="title" id="todoTitle" placeholder="Título da tarefa" required>
+            <select name="priority" id="todoPriority">
+                <option value="1">Alta Prioridade</option>
+                <option value="2" selected>Média Prioridade</option>
+                <option value="3">Baixa Prioridade</option>
+            </select>
+            <br><br>
+            <button type="submit">Adicionar Tarefa</button>
+        </form>
+        
+        <!-- Lista de Tarefas -->
         <h3>Minhas Tarefas</h3>
-        <ul id="todos"></ul>
+        <ul id="todos">
+            <li>Carregando...</li>
+        </ul>
     </div>
 
-    <script>
-        const API = window.location.origin;
-        let token = null;
-
-        async function register() {
-            const res = await fetch(`${API}/auth/register`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value,
-                    name: document.getElementById('name').value
-                })
-            });
-            
-            if (res.ok) {
-                alert('Registrado! Agora faça login.');
-            } else {
-                const error = await res.json();
-                alert('Erro: ' + (error.error || 'Falha no registro'));
-            }
-        }
-
-        async function login() {
-            const res = await fetch(`${API}/auth/login`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                })
-            });
-            
-            if (res.ok) {
-                const data = await res.json();
-                token = data.access_token;
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-                document.getElementById('user').textContent = `Olá, ${data.user.name || data.user.email}!`;
-                loadTodos();
-            } else {
-                const error = await res.json();
-                alert('Erro: ' + (error.error || 'Login inválido'));
-            }
-        }
-
-        function logout() {
-            token = null;
-            document.getElementById('auth').style.display = 'block';
-            document.getElementById('app').style.display = 'none';
-        }
-
-        async function addTodo() {
-            const res = await fetch(`${API}/todos`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    title: document.getElementById('title').value,
-                    priority: parseInt(document.getElementById('priority').value)
-                })
-            });
-            
-            if (res.ok) {
-                document.getElementById('title').value = '';
-                loadTodos();
-            }
-        }
-
-        async function loadTodos() {
-            const res = await fetch(`${API}/todos`, {
-                headers: {'Authorization': `Bearer ${token}`}
-            });
-            
-            if (res.ok) {
-                const data = await res.json();
-                const list = document.getElementById('todos');
-                list.innerHTML = '';
-                
-                data.items.forEach(todo => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <input type="checkbox" ${todo.completed ? 'checked' : ''} 
-                               onchange="toggleTodo(${todo.id}, this.checked)">
-                        ${todo.title} (Prioridade: ${todo.priority})
-                        <button onclick="deleteTodo(${todo.id})">Excluir</button>
-                    `;
-                    list.appendChild(li);
-                });
-            }
-        }
-
-        async function toggleTodo(id, completed) {
-            await fetch(`${API}/todos/${id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({completed})
-            });
-            loadTodos();
-        }
-
-        async function deleteTodo(id) {
-            if (confirm('Excluir tarefa?')) {
-                await fetch(`${API}/todos/${id}`, {
-                    method: 'DELETE',
-                    headers: {'Authorization': `Bearer ${token}`}
-                });
-                loadTodos();
-            }
-        }
-    </script>
+    <!-- Script da aplicação -->
+    <script src="app.js"></script>
 </body>
 </html>

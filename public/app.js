@@ -1,235 +1,235 @@
-const API_URL = 'http://localhost:3000';
-let currentToken = localStorage.getItem('token');
+// API Configuration
+const API = window.location.origin;
+let token = localStorage.getItem('token');
 
-// Elementos DOM
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const todoForm = document.getElementById('todoForm');
-const todosList = document.getElementById('todosList');
-const authSection = document.getElementById('authSection');
-const appSection = document.getElementById('appSection');
-const userInfo = document.getElementById('userInfo');
+// DOM Elements
+const authSection = document.getElementById('auth');
+const appSection = document.getElementById('app');
+const userInfo = document.getElementById('user');
+const todosList = document.getElementById('todos');
+const messageDiv = document.getElementById('message');
 
-// Verificar se está logado ao carregar a página
-if (currentToken) {
-  // Verificar se o token ainda é válido
-  fetch(`${API_URL}/auth/me`, {
-    headers: { 'Authorization': `Bearer ${currentToken}` }
-  }).then(response => {
-    if (response.ok) {
-      showApp();
-    } else {
-      // Token inválido, limpar e mostrar login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      currentToken = null;
-      showAuth();
-    }
-  }).catch(() => {
-    showAuth();
-  });
-} else {
-  showAuth();
-}
-
-// Login
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-
-  try {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      currentToken = data.access_token;
-      localStorage.setItem('token', currentToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      showApp();
-      loadTodos();
-    } else {
-      alert('Erro no login: ' + data.error);
-    }
-  } catch (error) {
-    alert('Erro: ' + error.message);
-  }
-});
-
-// Registro
-registerForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('registerName').value;
-  const email = document.getElementById('registerEmail').value;
-  const password = document.getElementById('registerPassword').value;
-
-  try {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      alert('Usuário criado! Faça login.');
-      registerForm.reset();
-    } else {
-      alert('Erro no registro: ' + data.error);
-    }
-  } catch (error) {
-    alert('Erro: ' + error.message);
-  }
-});
-
-// Criar tarefa
-todoForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const title = document.getElementById('todoTitle').value;
-  const priority = document.getElementById('todoPriority').value;
-
-  try {
-    const response = await fetch(`${API_URL}/todos`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentToken}`
-      },
-      body: JSON.stringify({ title, priority: parseInt(priority) })
-    });
-
-    if (response.ok) {
-      todoForm.reset();
-      loadTodos();
-    } else {
-      const data = await response.json();
-      alert('Erro: ' + data.error);
-    }
-  } catch (error) {
-    alert('Erro: ' + error.message);
-  }
-});
-
-// Carregar tarefas
-async function loadTodos() {
-  try {
-    const response = await fetch(`${API_URL}/todos`, {
-      headers: { 'Authorization': `Bearer ${currentToken}` }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      displayTodos(data.items);
-    } else {
-      alert('Erro ao carregar tarefas');
-    }
-  } catch (error) {
-    alert('Erro: ' + error.message);
-  }
-}
-
-// Exibir tarefas
-function displayTodos(todos) {
-  todosList.innerHTML = '';
-  todos.forEach(todo => {
-    const div = document.createElement('div');
-    div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-    div.innerHTML = `
-      <div class="todo-content">
-        <span class="todo-title">${todo.title}</span>
-        <span class="todo-priority">Prioridade: ${todo.priority || 'N/A'}</span>
-      </div>
-      <div class="todo-actions">
-        <button onclick="toggleTodo(${todo.id}, ${!todo.completed})" class="btn-toggle">
-          ${todo.completed ? 'Desfazer' : 'Concluir'}
-        </button>
-        <button onclick="deleteTodo(${todo.id})" class="btn-delete">Excluir</button>
-      </div>
-    `;
-    todosList.appendChild(div);
-  });
-}
-
-// Alternar status da tarefa
-async function toggleTodo(id, completed) {
-  try {
-    const response = await fetch(`${API_URL}/todos/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentToken}`
-      },
-      body: JSON.stringify({ completed })
-    });
-
-    if (response.ok) {
-      loadTodos();
-    }
-  } catch (error) {
-    alert('Erro: ' + error.message);
-  }
-}
-
-// Deletar tarefa
-async function deleteTodo(id) {
-  if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-    try {
-      const response = await fetch(`${API_URL}/todos/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${currentToken}` }
-      });
-
-      if (response.ok) {
+// Initialize app
+document.addEventListener('DOMContentLoaded', function() {
+    if (token) {
+        showApp();
         loadTodos();
-      }
-    } catch (error) {
-      alert('Erro: ' + error.message);
+    } else {
+        showAuth();
     }
-  }
+    
+    // Form event listeners
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    document.getElementById('todoForm').addEventListener('submit', handleAddTodo);
+});
+
+// Show/Hide sections
+function showAuth() {
+    authSection.style.display = 'block';
+    appSection.style.display = 'none';
+}
+
+function showApp() {
+    authSection.style.display = 'none';
+    appSection.style.display = 'block';
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    userInfo.textContent = `Olá, ${user.name || user.email}!`;
+}
+
+// Display messages
+function showMessage(text, isError = false) {
+    messageDiv.textContent = text;
+    messageDiv.style.color = isError ? 'red' : 'green';
+    setTimeout(() => messageDiv.textContent = '', 3000);
+}
+
+// Handle registration
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const userData = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        password: formData.get('password')
+    };
+    
+    try {
+        const res = await fetch(`${API}/auth/register`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(userData)
+        });
+        
+        if (res.ok) {
+            showMessage('Usuário registrado! Agora faça login.');
+            e.target.reset();
+        } else {
+            const error = await res.json();
+            showMessage(getErrorMessage(error.error), true);
+        }
+    } catch (err) {
+        showMessage('Erro de conexão', true);
+    }
+}
+
+// Handle login
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const loginData = {
+        email: formData.get('email'),
+        password: formData.get('password')
+    };
+    
+    try {
+        const res = await fetch(`${API}/auth/login`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(loginData)
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            token = data.access_token;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            showApp();
+            loadTodos();
+            showMessage('Login realizado com sucesso!');
+        } else {
+            const error = await res.json();
+            showMessage(getErrorMessage(error.error), true);
+        }
+    } catch (err) {
+        showMessage('Erro de conexão', true);
+    }
+}
+
+// Handle add todo
+async function handleAddTodo(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const todoData = {
+        title: formData.get('title'),
+        priority: parseInt(formData.get('priority'))
+    };
+    
+    try {
+        const res = await fetch(`${API}/todos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(todoData)
+        });
+        
+        if (res.ok) {
+            e.target.reset();
+            loadTodos();
+            showMessage('Tarefa adicionada!');
+        } else {
+            showMessage('Erro ao adicionar tarefa', true);
+        }
+    } catch (err) {
+        showMessage('Erro de conexão', true);
+    }
+}
+
+// Load todos
+async function loadTodos() {
+    try {
+        const res = await fetch(`${API}/todos`, {
+            headers: {'Authorization': `Bearer ${token}`}
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            displayTodos(data.items);
+        } else if (res.status === 401) {
+            logout();
+        }
+    } catch (err) {
+        showMessage('Erro ao carregar tarefas', true);
+    }
+}
+
+// Display todos
+function displayTodos(todos) {
+    todosList.innerHTML = '';
+    
+    if (todos.length === 0) {
+        todosList.innerHTML = '<li>Nenhuma tarefa encontrada</li>';
+        return;
+    }
+    
+    todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                   onchange="toggleTodo(${todo.id}, this.checked)">
+            <span style="${todo.completed ? 'text-decoration: line-through' : ''}">${todo.title}</span>
+            <small>(Prioridade: ${todo.priority})</small>
+            <button onclick="deleteTodo(${todo.id})">Excluir</button>
+        `;
+        todosList.appendChild(li);
+    });
+}
+
+// Toggle todo completion
+async function toggleTodo(id, completed) {
+    try {
+        await fetch(`${API}/todos/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({completed})
+        });
+        loadTodos();
+    } catch (err) {
+        showMessage('Erro ao atualizar tarefa', true);
+    }
+}
+
+// Delete todo
+async function deleteTodo(id) {
+    if (!confirm('Excluir esta tarefa?')) return;
+    
+    try {
+        await fetch(`${API}/todos/${id}`, {
+            method: 'DELETE',
+            headers: {'Authorization': `Bearer ${token}`}
+        });
+        loadTodos();
+        showMessage('Tarefa excluída!');
+    } catch (err) {
+        showMessage('Erro ao excluir tarefa', true);
+    }
 }
 
 // Logout
 function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  currentToken = null;
-  showAuth();
+    token = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    showAuth();
+    showMessage('Logout realizado');
 }
 
-// Mostrar seção de autenticação
-function showAuth() {
-  authSection.style.display = 'block';
-  appSection.style.display = 'none';
-}
-
-// Mostrar aplicação
-function showApp() {
-  authSection.style.display = 'none';
-  appSection.style.display = 'block';
-  
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  userInfo.textContent = `Olá, ${user.name || user.email}!`;
-  
-  loadTodos();
-}
-
-// Alternar entre login e registro
-function toggleAuth() {
-  const loginDiv = document.getElementById('loginDiv');
-  const registerDiv = document.getElementById('registerDiv');
-  const toggleText = document.querySelector('.auth-toggle p');
-  
-  if (loginDiv.style.display === 'none') {
-    loginDiv.style.display = 'block';
-    registerDiv.style.display = 'none';
-    toggleText.innerHTML = 'Não tem conta? <button class="btn-link" onclick="toggleAuth()">Clique aqui para criar</button>';
-  } else {
-    loginDiv.style.display = 'none';
-    registerDiv.style.display = 'block';
-    toggleText.innerHTML = 'Já tem conta? <button class="btn-link" onclick="toggleAuth()">Clique aqui para entrar</button>';
-  }
+// Get user-friendly error messages
+function getErrorMessage(error) {
+    const messages = {
+        'EmailAlreadyUsed': 'E-mail já cadastrado',
+        'InvalidCredentials': 'E-mail ou senha incorretos',
+        'ValidationError': 'Dados inválidos'
+    };
+    return messages[error] || 'Erro desconhecido';
 }

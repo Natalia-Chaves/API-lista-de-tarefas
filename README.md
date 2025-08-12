@@ -205,11 +205,7 @@ npm start
 
 A API estará rodando em `http://localhost:3000`
 
-### Interface Web
-A API inclui uma interface web simples acessível em `http://localhost:3000` que permite:
-- Cadastro e login de usuários
-- Criação, visualização e gerenciamento de tarefas
-- Interface responsiva para desktop e mobile
+**Interface Web**: Acesse `http://localhost:3000` para usar a interface gráfica que consome a API.
 
 ## 🚀 Como Usar a API
 
@@ -600,13 +596,32 @@ Invoke-RestMethod -Uri "http://localhost:3000/health"
 ```
 
 ### Interface Web
-Além dos endpoints da API, o projeto inclui uma interface web completa:
+Além dos endpoints da API, o projeto inclui uma interface web simples:
 - **URL**: `http://localhost:3000`
-- **Funcionalidades**: Login, registro, CRUD de tarefas
-- **Tecnologia**: HTML, CSS e JavaScript vanilla
-- **Responsiva**: Funciona em desktop e mobile
+- **Arquivos**: `public/index.html` e `public/app.js`
+- **Funcionalidades**: 
+  - Cadastro de novos usuários
+  - Login com persistência de sessão
+  - Criação de tarefas com prioridade
+  - Marcação de tarefas como concluídas
+  - Exclusão de tarefas
+  - Mensagens de feedback amigáveis
+- **Tecnologia**: HTML semântico e JavaScript vanilla
+- **Persistência**: Usa localStorage para manter usuário logado
 
-A interface consome a própria API e demonstra todas as funcionalidades em ação.
+#### Como Usar a Interface:
+1. Acesse `http://localhost:3000` após iniciar o servidor
+2. **Primeiro acesso**: Crie uma conta no formulário "Criar Conta"
+3. **Login**: Use suas credenciais no formulário "Entrar"
+4. **Gerenciar tarefas**: Adicione, marque como concluída ou exclua tarefas
+5. **Sessão**: Permanece logado mesmo após recarregar a página
+
+#### Personalização:
+- **HTML**: Modifique `public/index.html` para alterar layout
+- **JavaScript**: Edite `public/app.js` para mudar comportamentos
+- **Estilos**: Adicione CSS inline ou arquivo externo conforme necessário
+
+A interface consome diretamente a API REST e demonstra todas as funcionalidades em ação.
 
 ## 🚀 Deploy e Produção
 
