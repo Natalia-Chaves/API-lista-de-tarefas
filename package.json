@@ -1,0 +1,45 @@
+{
+  "name": "api-lista-de-tarefas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "prisma:studio": "npx prisma studio",
+    "pretest": "npx prisma generate && cross-env DATABASE_URL=\"file:./dev.test.db\" npx prisma migrate deploy",
+    "test": "cross-env NODE_ENV=test DATABASE_URL=\"file:./dev.test.db\" vitest run --globals --environment node --pool=threads --poolOptions.threads.singleThread=true",
+    "test:watch": "cross-env NODE_ENV=test DATABASE_URL=\"file:./dev.test.db\" vitest --globals --environment node",
+    "vitest": "cross-env NODE_ENV=test DATABASE_URL=\"file:./dev.test.db\" vitest run --globals --environment node --pool=threads --poolOptions.threads.singleThread=true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Natalia-Chaves/API-lista-de-tarefas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Natalia-Chaves/API-lista-de-tarefas/issues"
+  },
+  "homepage": "https://github.com/Natalia-Chaves/API-lista-de-tarefas#readme",
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.13.0",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
+}

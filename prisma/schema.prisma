@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  password     String
+  name         String?
+  todos        Todo[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  RefreshToken RefreshToken[]
+}
+
+model Todo {
+  id        Int       @id @default(autoincrement())
+  title     String
+  completed Boolean   @default(false)
+  priority  Int?
+  dueDate   DateTime?
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([completed])
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  jti       String    @unique
+  token     String // opcional guardar o JWT inteiro; pode ser só o jti se preferir
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  userAgent String?
+  ip        String?
+  isRevoked Boolean   @default(false)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@index([jti])
+}
