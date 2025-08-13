@@ -2,20 +2,6 @@
 
 Uma API REST completa para gerenciamento de tarefas com autenticação JWT, construída com Node.js, Express e Prisma.
 
-## 📚 Índice
-
-- [O que é esta API?](#o-que-é-esta-api)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Conceitos Fundamentais](#conceitos-fundamentais)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Instalação e Configuração](#instalação-e-configuração)
-- [Como Usar a API](#como-usar-a-api)
-- [Testando a API com Insomnia/Postman](#testando-a-api-com-insomniapostman)
-- [Exemplos Práticos](#exemplos-práticos)
-- [Testes](#testes)
-- [Segurança](#segurança)
-- [Banco de Dados](#banco-de-dados)
-
 ## 🎯 O que é esta API?
 
 Esta é uma **API REST** (Representational State Transfer) que permite:
